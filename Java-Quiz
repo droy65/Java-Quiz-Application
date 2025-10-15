@@ -1,0 +1,544 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
+
+public class quiz{
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(LoginFrame::new);
+    }
+}
+
+class LoginFrame extends JFrame {
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private Color bgColor = new Color(230, 240, 255); // Light blue background
+    private Color buttonColor = new Color(70, 130, 180); // SteelBlue buttons
+    private Color textColor = new Color(25, 25, 112); // MidnightBlue text
+
+    public LoginFrame() {
+        setTitle("Quiz App - Login");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(1540, 810);
+        setLocationRelativeTo(null);
+        getContentPane().setBackground(bgColor);
+        setupUI();
+    }
+
+    private void setupUI() {
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(bgColor);
+
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setDividerLocation(500);
+        splitPane.setDividerSize(0);
+        splitPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
+
+        JPanel leftPanel = new JPanel(new BorderLayout());
+        leftPanel.setBackground(bgColor);
+        leftPanel.setPreferredSize(new Dimension(500, 600));
+
+
+
+            ImageIcon originalIcon = new ImageIcon(getClass().getResource("/q4.jpg"));
+
+                Image scaledImage = originalIcon.getImage().getScaledInstance(680, 800, Image.SCALE_SMOOTH);
+                JLabel imageLabel = new JLabel(new ImageIcon(scaledImage));
+                imageLabel.setHorizontalAlignment(JLabel.CENTER);
+                leftPanel.add(imageLabel, BorderLayout.CENTER);
+
+
+
+
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setBackground(bgColor);
+        rightPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
+
+
+        JLabel titleLabel = new JLabel("Welcome to Quizzy Buzzers", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 28));
+        titleLabel.setForeground(textColor);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
+        rightPanel.add(titleLabel, BorderLayout.NORTH);
+
+
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBackground(bgColor);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 0, 15, 0);
+
+
+        JLabel usernameLabel = new JLabel("Username:");
+        usernameLabel.setFont(new Font("Arial", Font.PLAIN, 18));
+        usernameLabel.setForeground(textColor);
+        formPanel.add(usernameLabel, gbc);
+
+        usernameField = new JTextField(20);
+        usernameField.setFont(new Font("Arial", Font.PLAIN, 18));
+        formPanel.add(usernameField, gbc);
+
+
+        JLabel passwordLabel = new JLabel("Password:");
+        passwordLabel.setFont(new Font("Arial", Font.PLAIN, 18));
+        passwordLabel.setForeground(textColor);
+        formPanel.add(passwordLabel, gbc);
+
+        passwordField = new JPasswordField(20);
+        passwordField.setFont(new Font("Arial", Font.PLAIN, 18));
+        formPanel.add(passwordField, gbc);
+
+
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 20, 0));
+        buttonPanel.setBackground(bgColor);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+
+        JButton loginButton = new JButton("Login");
+        styleButton(loginButton);
+        loginButton.addActionListener(e -> attemptLogin());
+
+        JButton exitButton = new JButton("Exit");
+        styleButton(exitButton);
+        exitButton.addActionListener(e -> System.exit(0));
+
+        buttonPanel.add(loginButton);
+        buttonPanel.add(exitButton);
+
+        gbc.insets = new Insets(20, 0, 0, 0);
+        formPanel.add(buttonPanel, gbc);
+
+        rightPanel.add(formPanel, BorderLayout.CENTER);
+
+
+        JLabel footerLabel = new JLabel("Enter any username and password to login", SwingConstants.CENTER);
+        footerLabel.setFont(new Font("Arial", Font.ITALIC, 14));
+        footerLabel.setForeground(textColor);
+        rightPanel.add(footerLabel, BorderLayout.SOUTH);
+
+        splitPane.setLeftComponent(leftPanel);
+        splitPane.setRightComponent(rightPanel);
+
+        mainPanel.add(splitPane, BorderLayout.CENTER);
+        add(mainPanel);
+        setVisible(true);
+    }
+
+    private void styleButton(JButton button) {
+        button.setFont(new Font("Arial", Font.BOLD, 18));
+        button.setBackground(buttonColor);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 25, 10, 25));
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(buttonColor.darker());
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(buttonColor);
+            }
+        });
+    }
+
+    private void attemptLogin() {
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword());
+
+        if (username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter both username and password", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+
+        this.dispose();
+        new QuizFrame(username);
+    }
+}
+
+class QuizFrame extends JFrame {
+    private List<Question> questions;
+    private int currentQuestionIndex = 0;
+    private int score = 0;
+    private String username;
+
+    private JLabel questionLabel;
+    private JRadioButton[] optionButtons;
+    private ButtonGroup buttonGroup;
+    private JButton previousButton, nextButton, submitButton;
+    private JLabel scoreLabel, timerLabel;
+    private JPanel mainPanel;
+    private Color bgColor = new Color(230, 240, 255); // Light blue background
+    private Color buttonColor = new Color(70, 130, 180); // SteelBlue buttons
+    private Color textColor = new Color(25, 25, 112); // MidnightBlue text
+
+    public QuizFrame(String username) {
+        this.username = username;
+        setTitle("Java Quiz App - Welcome " + username);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(1540, 810);
+        setLocationRelativeTo(null);
+        getContentPane().setBackground(bgColor);
+
+        initializeQuestions();
+        setupUI();
+        showQuestion();
+    }
+
+    private void initializeQuestions() {
+        questions = new ArrayList<>();
+
+        questions.add(new Question(
+                "Which statement is true about Java?",
+                new String[]{
+                        "Java is a sequence-dependent programming language",
+                        "Java is a code dependent programming language",
+                        "Java is a platform-dependent programming language",
+                        "Java is a platform-independent programming language"
+                },
+                3
+        ));
+
+        questions.add(new Question(
+                "Which of these cannot be used for a variable name in Java?",
+                new String[]{
+                        "identifier & keyword",
+                        "identifier",
+                        "keyword",
+                        "None of these"
+                },
+                2
+        ));
+
+        questions.add(new Question(
+                "Which package contains the Random class?",
+                new String[]{
+                        "java.util package",
+                        "java.lang package",
+                        "java.awt package",
+                        "java.io package"
+                },
+                0
+        ));
+
+        questions.add(new Question(
+                "What is not the use of 'this' keyword in Java?",
+                new String[]{
+                        "Referring to the instance variable when a local variable has the same name",
+                        "Passing itself to the method of the same class",
+                        "Passing itself to another method",
+                        "Calling another constructor in constructor chaining"
+                },
+                1
+        ));
+
+        questions.add(new Question(
+                "What will be the error in the following Java code?\nbyte b = 50;\nb = b * 50;",
+                new String[]{
+                        "b cannot contain value 50",
+                        "b cannot contain value 100, limited by its range",
+                        "No error in this code",
+                        "* operator has converted b * 50 into int, which can not be converted to byte without casting"
+                },
+                3
+        ));
+
+        questions.add(new Question(
+                "Which of these are selection statements in Java?",
+                new String[]{
+                        "break",
+                        "continue",
+                        "for()",
+                        "if()"
+                },
+                3
+        ));
+
+        questions.add(new Question(
+                "Which of the following is a superclass of every class in Java?",
+                new String[]{
+                        "ArrayList",
+                        "Abstract class",
+                        "Object class",
+                        "String"
+                },
+                2 // Correct answer: Object class
+        ));
+
+        questions.add(new Question(
+                "Which of these keywords are used for the block to be examined for exceptions?",
+                new String[]{
+                        "check",
+                        "throw",
+                        "catch",
+                        "try"
+                },
+                3
+        ));
+
+        questions.add(new Question(
+                "What is the numerical range of a char data type in Java?",
+                new String[]{
+                        "0 to 256",
+                        "-128 to 127",
+                        "0 to 65535",
+                        "0 to 32767"
+                },
+                2
+        ));
+
+        questions.add(new Question(
+                "Automatic type conversion is possible in which of the possible cases?",
+                new String[]{
+                        "Byte to Int",
+                        "Int to Long",
+                        "Long to Int",
+                        "short to Int"
+                },
+                1
+        ));
+    }
+
+    private void setupUI() {
+        mainPanel = new JPanel(new BorderLayout(15, 15));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        mainPanel.setBackground(bgColor);
+
+
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(bgColor);
+
+        scoreLabel = new JLabel("Score: 0", SwingConstants.LEFT);
+        scoreLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        scoreLabel.setForeground(textColor);
+
+        JLabel titleLabel = new JLabel("Java Quiz - " + username, SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setForeground(textColor);
+
+        timerLabel = new JLabel("Question: 1/" + questions.size(), SwingConstants.RIGHT);
+        timerLabel.setFont(new Font("Arial", Font.PLAIN, 18));
+        timerLabel.setForeground(textColor);
+
+        headerPanel.add(scoreLabel, BorderLayout.WEST);
+        headerPanel.add(titleLabel, BorderLayout.CENTER);
+        headerPanel.add(timerLabel, BorderLayout.EAST);
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
+
+
+        JPanel questionPanel = new JPanel(new BorderLayout());
+        questionPanel.setBackground(bgColor);
+        questionPanel.setBorder(BorderFactory.createEmptyBorder(40, 20, 40, 20));
+
+        questionLabel = new JLabel("", SwingConstants.CENTER);
+        questionLabel.setFont(new Font("Arial", Font.BOLD, 22));
+        questionLabel.setForeground(textColor);
+        questionPanel.add(questionLabel, BorderLayout.NORTH);
+
+
+        JPanel optionsPanel = new JPanel(new GridLayout(4, 1, 15, 15));
+        optionsPanel.setBackground(bgColor);
+        optionButtons = new JRadioButton[4];
+        buttonGroup = new ButtonGroup();
+
+        for (int i = 0; i < 4; i++) {
+            optionButtons[i] = new JRadioButton();
+            optionButtons[i].setFont(new Font("Arial", Font.PLAIN, 20));
+            optionButtons[i].setBackground(bgColor);
+            optionButtons[i].setForeground(textColor);
+            buttonGroup.add(optionButtons[i]);
+            optionsPanel.add(optionButtons[i]);
+        }
+
+        questionPanel.add(optionsPanel, BorderLayout.CENTER);
+        mainPanel.add(questionPanel, BorderLayout.CENTER);
+
+
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 3, 20, 0));
+        buttonPanel.setBackground(bgColor);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
+
+        previousButton = new JButton("Previous");
+        styleButton(previousButton);
+        previousButton.addActionListener(e -> {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                showQuestion();
+            }
+        });
+
+        nextButton = new JButton("Next");
+        styleButton(nextButton);
+        nextButton.addActionListener(e -> {
+            checkAnswer();
+            currentQuestionIndex++;
+            buttonGroup.clearSelection(); // Clear the selection before showing next question
+            showQuestion();
+        });
+
+        submitButton = new JButton("Submit");
+        styleButton(submitButton);
+        submitButton.addActionListener(e -> {
+            checkAnswer();
+            showResult();
+        });
+
+        buttonPanel.add(previousButton);
+        buttonPanel.add(nextButton);
+        buttonPanel.add(submitButton);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        add(mainPanel);
+        setVisible(true);
+    }
+
+    private void styleButton(JButton button) {
+        button.setFont(new Font("Arial", Font.BOLD, 20));
+        button.setBackground(buttonColor);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(15, 30, 15, 30));
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(buttonColor.darker());
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(buttonColor);
+            }
+        });
+    }
+
+    private void showQuestion() {
+        Question currentQuestion = questions.get(currentQuestionIndex);
+        questionLabel.setText((currentQuestionIndex + 1) + ". " + currentQuestion.getQuestionText());
+
+        String[] options = currentQuestion.getOptions();
+        for (int i = 0; i < 4; i++) {
+            optionButtons[i].setText(options[i]);
+        }
+
+
+        previousButton.setEnabled(currentQuestionIndex > 0);
+        nextButton.setEnabled(currentQuestionIndex < questions.size() - 1);
+        submitButton.setEnabled(currentQuestionIndex == questions.size() - 1);
+        timerLabel.setText("Question: " + (currentQuestionIndex + 1) + "/" + questions.size());
+    }
+
+    private void checkAnswer() {
+        Question currentQuestion = questions.get(currentQuestionIndex);
+        for (int i = 0; i < 4; i++) {
+            if (optionButtons[i].isSelected() && i == currentQuestion.getCorrectAnswerIndex()) {
+                score++;
+                scoreLabel.setText("Score: " + score);
+                break;
+            }
+        }
+    }
+
+    private void showResult() {
+        mainPanel.removeAll();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.setBackground(bgColor);
+
+        JLabel resultLabel = new JLabel("Quiz Completed!", SwingConstants.CENTER);
+        resultLabel.setFont(new Font("Arial", Font.BOLD, 32));
+        resultLabel.setForeground(textColor);
+
+
+        double percentage = (double)score / questions.size() * 100;
+        String performance;
+        Color resultColor;
+
+        if (percentage >= 75) {
+            performance = "Excellent!";
+            resultColor = new Color(34, 139, 34); // ForestGreen
+        } else if (percentage >= 50) {
+            performance = "Good job!";
+            resultColor = new Color(65, 105, 225); // RoyalBlue
+        } else {
+            performance = "Keep practicing!";
+            resultColor = new Color(220, 20, 60); // Crimson
+        }
+
+        JLabel performanceLabel = new JLabel(performance, SwingConstants.CENTER);
+        performanceLabel.setFont(new Font("Arial", Font.BOLD, 26));
+        performanceLabel.setForeground(resultColor);
+
+        JLabel finalScoreLabel = new JLabel(
+                "<html><div style='text-align: center;'>" +
+                        "User: <b>" + username + "</b><br>" +
+                        "Your Score: <b>" + score + "</b> out of <b>" + questions.size() + "</b><br>" +
+                        "Percentage: <b>" + String.format("%.1f", percentage) + "%</b>" +
+                        "</div></html>",
+                SwingConstants.CENTER
+        );
+        finalScoreLabel.setFont(new Font("Arial", Font.PLAIN, 22));
+        finalScoreLabel.setForeground(textColor);
+
+        JButton restartButton = new JButton("Restart Quiz");
+        styleButton(restartButton);
+        restartButton.addActionListener(e -> {
+            currentQuestionIndex = 0;
+            score = 0;
+            scoreLabel.setText("Score: 0");
+            mainPanel.removeAll();
+            setupUI();
+            showQuestion();
+            revalidate();
+            repaint();
+        });
+
+        JButton logoutButton = new JButton("Logout");
+        styleButton(logoutButton);
+        logoutButton.addActionListener(e -> {
+            this.dispose();
+            new LoginFrame();
+        });
+
+        JPanel centerPanel = new JPanel(new GridLayout(3, 1, 0, 20));
+        centerPanel.setBackground(bgColor);
+        centerPanel.add(resultLabel);
+        centerPanel.add(performanceLabel);
+        centerPanel.add(finalScoreLabel);
+
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 30, 0));
+        buttonPanel.setBackground(bgColor);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 100, 30, 100));
+        buttonPanel.add(restartButton);
+        buttonPanel.add(logoutButton);
+
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        revalidate();
+        repaint();
+    }
+}
+
+class Question {
+    private String questionText;
+    private String[] options;
+    private int correctAnswerIndex;
+
+    public Question(String questionText, String[] options, int correctAnswerIndex) {
+        this.questionText = questionText;
+        this.options = options;
+        this.correctAnswerIndex = correctAnswerIndex;
+    }
+
+    public String getQuestionText() {
+        return questionText;
+    }
+
+    public String[] getOptions() {
+        return options;
+    }
+
+    public int getCorrectAnswerIndex() {
+        return correctAnswerIndex;
+    }
+}
